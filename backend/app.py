@@ -41,7 +41,7 @@ def ping_db():
 
 @app.route('/api/register', methods=['POST'])
 def register_user():
-    import bcrypt
+    from bcrypt import hashpw, gensalt
     data = request.get_json()
 
     if not data or not all(key in data for key in ['username', 'password', 'email']):
@@ -51,7 +51,7 @@ def register_user():
         }), 400
 
     username = data['username']
-    hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt())
+    hashed_password = hashpw(data['password'].encode('utf-8'), gensalt()).decode('utf-8')
     email = data['email']
 
     db = create_db_connection()
