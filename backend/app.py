@@ -94,9 +94,8 @@ def authenticate_user():
 
     db = create_db_connection()
     try:
-        password_data = db.fetchone("SELECT password_hash FROM users WHERE email = %s", (email,))
-        password_hash = password_data["password_hash"].encode('utf-8')
-        if not password_data or not checkpw(password.encode('utf-8'), password_hash):
+        data = db.fetchone("SELECT id, password_hash FROM users WHERE email = %s", (email,))
+        if not data or not checkpw(password.encode('utf-8'), data["password_hash"].encode('utf-8')):
             return jsonify({
                 'status': 'fail',
                 'message': "Password doesn't match. Please try again.",
