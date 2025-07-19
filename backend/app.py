@@ -78,5 +78,42 @@ def register_user():
         db.close()
 
 
+@app.route('/api/authenticate', methods=['POST'])
+def authenticate_user():
+    from bcrypt import checkpw
+    data = request.get_json()
+
+    if not data or not all(key in data for key in ['password', 'email']):
+        return jsonify({
+            'status': 'fail',
+            'message': "Missing data. 'password', and 'email' are required.",
+        }), 400
+
+    email = data['email']
+    password = data['password']
+
+    db = create_db_connection()
+    try:
+        password_data = db.fetchone("SELECT password_hash FROM users WHERE email = %s", (email,))
+        password_hash = password_data["password_hash"].encode('utf-8')
+        if not password_data or not checkpw(password.encode('utf-8'), password_hash):
+            return jsonify({
+                'status': 'fail',
+                'message': "Password doesn't match. Please try again.",
+            }), 401
+
+        return jsonify({
+            'status': 'success',
+            'message': 'User authenticated successfully',
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'status': 'fail',
+            'message': str(e),
+        }), 500
+    finally:
+        db.close()
+
+
 if __name__ == '__main__':
     app.run()
