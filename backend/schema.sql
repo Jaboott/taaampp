@@ -1,3 +1,9 @@
+CREATE TYPE titles AS (
+    romaji TEXT,
+    english TEXT,
+    native TEXT
+);
+
 CREATE TYPE fuzzy_date AS (
     year INTEGER,
     month INTEGER,
@@ -5,8 +11,8 @@ CREATE TYPE fuzzy_date AS (
 );
 
 CREATE TYPE airing_schedule AS (
-    episode INTEGER NOT NULL,
-    airing_at TIMESTAMPTZ NOT NULL
+    episode INTEGER,
+    airing_at TIMESTAMPTZ
 );
 
 CREATE TYPE recommendation AS (
@@ -30,7 +36,7 @@ CREATE TABLE users (
 
 CREATE TABLE anime (
     id INTEGER PRIMARY KEY,
-    titles TEXT[] NOT NULL,
+    titles titles NOT NULL,
     format TEXT,
     status TEXT NOT NULL,
     season TEXT,
