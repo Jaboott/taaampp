@@ -2,7 +2,7 @@ package media
 
 const DiscoverAnime = `
 	query DiscoverAnime($page: Int) {
-		Page(page: $page, perPage: 1) {
+		Page(page: $page, perPage: 50) {
 			pageInfo {
 				currentPage
 				hasNextPage
