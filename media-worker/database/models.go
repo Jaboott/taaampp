@@ -39,7 +39,7 @@ type AnimeDetail struct {
 	Favourites        int32
 	AiringSchedule    sql.NullString
 	Recommendations   []string
-	ScoreDistribution sql.NullString
+	ScoreDistribution []string
 }
 
 type User struct {

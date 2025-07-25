@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -24,22 +25,23 @@ INSERT INTO anime (id,
                    average_score,
                    studio)
 VALUES ($1,
-        $2,
-        $3,
-        $4,
+        ROW($2, $3, $4)::titles,
         $5,
         $6,
         $7,
         $8,
         $9,
         $10,
-        $11
-       )
+        $11,
+        $12,
+        $13)
 `
 
 type PutAnimeParams struct {
 	ID           int32
-	Titles       string
+	Column2      string
+	Column3      string
+	Column4      string
 	Format       pgtype.Text
 	Status       string
 	Season       pgtype.Text
@@ -54,7 +56,9 @@ type PutAnimeParams struct {
 func (q *Queries) PutAnime(ctx context.Context, arg PutAnimeParams) error {
 	_, err := q.db.Exec(ctx, putAnime,
 		arg.ID,
-		arg.Titles,
+		arg.Column2,
+		arg.Column3,
+		arg.Column4,
 		arg.Format,
 		arg.Status,
 		arg.Season,
@@ -64,6 +68,76 @@ func (q *Queries) PutAnime(ctx context.Context, arg PutAnimeParams) error {
 		arg.Genres,
 		arg.AverageScore,
 		arg.Studio,
+	)
+	return err
+}
+
+const putAnimeDetails = `-- name: PutAnimeDetails :exec
+INSERT INTO anime_details (id,
+                           description,
+                           start_date,
+                           end_date,
+                           duration,
+                           source,
+                           trailer,
+                           banner_image,
+                           popularity,
+                           trending,
+                           favourites,
+                           airing_schedule,
+                           recommendations,
+                           score_distribution)
+VALUES (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7,
+        $8,
+        $9,
+        $10,
+        $11,
+        $12,
+        $13,
+        $14
+       )
+`
+
+type PutAnimeDetailsParams struct {
+	ID                int32
+	Description       pgtype.Text
+	StartDate         sql.NullString
+	EndDate           sql.NullString
+	Duration          pgtype.Int4
+	Source            pgtype.Text
+	Trailer           pgtype.Text
+	BannerImage       pgtype.Text
+	Popularity        int32
+	Trending          int32
+	Favourites        int32
+	AiringSchedule    sql.NullString
+	Recommendations   []string
+	ScoreDistribution []string
+}
+
+func (q *Queries) PutAnimeDetails(ctx context.Context, arg PutAnimeDetailsParams) error {
+	_, err := q.db.Exec(ctx, putAnimeDetails,
+		arg.ID,
+		arg.Description,
+		arg.StartDate,
+		arg.EndDate,
+		arg.Duration,
+		arg.Source,
+		arg.Trailer,
+		arg.BannerImage,
+		arg.Popularity,
+		arg.Trending,
+		arg.Favourites,
+		arg.AiringSchedule,
+		arg.Recommendations,
+		arg.ScoreDistribution,
 	)
 	return err
 }

@@ -11,6 +11,34 @@ INSERT INTO anime (id,
                    average_score,
                    studio)
 VALUES ($1,
+        ROW($2, $3, $4)::titles,
+        $5,
+        $6,
+        $7,
+        $8,
+        $9,
+        $10,
+        $11,
+        $12,
+        $13);
+
+-- name: PutAnimeDetails :exec
+INSERT INTO anime_details (id,
+                           description,
+                           start_date,
+                           end_date,
+                           duration,
+                           source,
+                           trailer,
+                           banner_image,
+                           popularity,
+                           trending,
+                           favourites,
+                           airing_schedule,
+                           recommendations,
+                           score_distribution)
+VALUES (
+        $1,
         $2,
         $3,
         $4,
@@ -20,5 +48,8 @@ VALUES ($1,
         $8,
         $9,
         $10,
-        $11
+        $11,
+        $12,
+        $13,
+        $14
        );
