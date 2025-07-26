@@ -12,7 +12,7 @@ CREATE TYPE fuzzy_date AS (
 
 CREATE TYPE airing_schedule AS (
     episode INTEGER,
-    airing_at TIMESTAMPTZ
+    airing_at BIGINT
 );
 
 CREATE TYPE recommendation AS (
@@ -63,5 +63,5 @@ CREATE TABLE anime_details (
     favourites INTEGER NOT NULL DEFAULT 0,
     airing_schedule airing_schedule,
     recommendations recommendation[],
-    score_distribution score_distribution
+    score_distribution score_distribution[]
 );
