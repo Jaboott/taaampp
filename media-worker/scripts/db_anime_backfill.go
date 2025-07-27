@@ -54,7 +54,6 @@ func discoverAnime(page int) (response media.AnimeQueryResponse, timeout int, er
 	return graphqlResponse, 0, nil
 }
 
-// TODO fuzzyDates need to handle nulls
 func insertAnime(
 	ctx context.Context,
 	pool *pgxpool.Pool,
@@ -71,6 +70,11 @@ func insertAnime(
 
 	toText := func(s string) pgtype.Text { return pgtype.Text{String: s, Valid: s != ""} }
 	toInt4 := func(n int) pgtype.Int4 { return pgtype.Int4{Int32: int32(n), Valid: n != 0} }
+	toDate := func(fuzzyDate media.FuzzyDate) sql.NullString {
+		return sql.NullString{String: fmt.Sprintf("(%d, %d, %d)",
+			anime.StartDate.Year, anime.StartDate.Month, anime.StartDate.Day),
+			Valid: fuzzyDate != (media.FuzzyDate{})}
+	}
 
 	var studios []string
 	for _, v := range anime.Studios.Nodes {
@@ -116,12 +120,9 @@ func insertAnime(
 	if err := qtx.PutAnimeDetails(ctx, database.PutAnimeDetailsParams{
 		ID:          int32(anime.ID),
 		Description: pgtype.Text{String: anime.Description, Valid: true},
-		StartDate: sql.NullString{String: fmt.Sprintf("(%d, %d, %d)",
-			anime.StartDate.Year, anime.StartDate.Month, anime.StartDate.Day), Valid: true},
-		EndDate: sql.NullString{String: fmt.Sprintf("(%d, %d, %d)",
-			anime.EndDate.Year, anime.EndDate.Month, anime.EndDate.Day), Valid: true},
-		Duration: toInt4(anime.Duration),
-		Source:   toText(anime.Source),
+		StartDate:   toDate(anime.StartDate),
+		EndDate:     toDate(anime.EndDate),
+		Source:      toText(anime.Source),
 		Trailer: pgtype.Text{String: fmt.Sprintf("www.%s.com/watch?v=%s",
 			anime.Trailer.Site, anime.Trailer.ID), Valid: anime.Trailer.Site != ""},
 		BannerImage:       toText(anime.BannerImage),
