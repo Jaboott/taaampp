@@ -46,7 +46,7 @@ CREATE TABLE anime (
     genres TEXT[],
     average_score INTEGER,
     studio TEXT[],
-    last_updated TIMESTAMPTZ DEFAULT NOW()
+    last_updated TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
 CREATE TABLE anime_details (
