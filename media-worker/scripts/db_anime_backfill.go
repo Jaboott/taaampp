@@ -122,12 +122,14 @@ func insertAnime(
 		Description: pgtype.Text{String: anime.Description, Valid: true},
 		StartDate:   toDate(anime.StartDate),
 		EndDate:     toDate(anime.EndDate),
+		Duration:    toInt4(anime.Duration),
 		Source:      toText(anime.Source),
 		Trailer: pgtype.Text{String: fmt.Sprintf("www.%s.com/watch?v=%s",
 			anime.Trailer.Site, anime.Trailer.ID), Valid: anime.Trailer.Site != ""},
 		BannerImage:       toText(anime.BannerImage),
 		Popularity:        int32(anime.Popularity),
 		Trending:          int32(anime.Trending),
+		Favourites:        int32(anime.Favourites),
 		AiringSchedule:    airingSch,
 		Recommendations:   recommendations,
 		ScoreDistribution: scores,
@@ -238,6 +240,8 @@ func main() {
 			stop = true
 		}
 		page++
+		// TODO try again for later
+		time.Sleep(400 * time.Millisecond)
 	}
 
 	close(jobs)
