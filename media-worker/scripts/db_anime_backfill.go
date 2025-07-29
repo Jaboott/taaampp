@@ -10,6 +10,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/machinebox/graphql"
 	"log"
+	"math"
 	"media-worker/database"
 	"media-worker/media"
 	"net/http"
@@ -162,12 +163,13 @@ func dbWorker(
 
 func main() {
 	// the AniList API is degraded right now so the limit is 30 instead of 90 per min
-	const rateLimitPerMin = 30
+	const (
+		rateLimitPerMin = 30
+		windowSeconds   = 65.0
+	)
 	var failedList []int
 
 	stop := false
-	limiter := time.Now().Unix()
-	numQueried := 0
 	jobs := make(chan media.AnimeDetails)
 	failedJobs := make(chan media.AnimeDetails)
 
@@ -198,21 +200,11 @@ func main() {
 		go dbWorker(i, jobs, failedJobs, pool, q)
 	}
 
+	windowStart := time.Now()
+	idx := 0
+
 	for page := 1; stop == false; {
-		currentTime := time.Now().Unix()
-
-		if numQueried%rateLimitPerMin == 0 {
-			// need to wait if the time taken to query 30 is less than 1 min
-			if currentTime < limiter {
-				fmt.Printf("Waiting for %d seconds to stay under rate limit\n", limiter-currentTime)
-				time.Sleep(time.Duration(limiter-currentTime) * time.Second)
-			}
-			limiter = time.Now().Unix() + 65
-			numQueried = 0
-		}
-
 		fmt.Printf("Starting page: %d\n", page)
-		numQueried++
 		response, timeout, err := discoverAnime(page)
 		if err != nil {
 			fmt.Printf("Page %d failed with error: %s\n", page, err)
@@ -223,11 +215,9 @@ func main() {
 
 		// the rate limits reset after timeout, need to start new 30 cycle
 		if timeout != 0 {
-			fmt.Printf("Received time out after querying page: %d\n", page)
-			fmt.Printf("Waiting for: %d Seconds\n", timeout)
+			fmt.Printf("rate‑limit timeout (%d s); sleeping...", timeout)
 			time.Sleep(time.Duration(timeout) * time.Second)
-			numQueried = 0
-			limiter = time.Now().Unix()
+			idx, windowStart = 0, time.Now()
 			continue
 		}
 
@@ -236,12 +226,23 @@ func main() {
 			jobs <- anime
 		}
 
+		fraction := float64(idx+1) / float64(rateLimitPerMin)
+		targetElapsed := time.Duration(
+			windowSeconds * math.Pow(fraction, 1.3) * float64(time.Second),
+		)
+		sleepFor := targetElapsed - time.Since(windowStart)
+		time.Sleep(sleepFor)
+
+		idx++
+		if idx == rateLimitPerMin {
+			idx, windowStart = 0, time.Now()
+		}
+
 		if response.Page.PageInfo.HasNextPage == false {
 			stop = true
 		}
+
 		page++
-		// TODO try again for later
-		time.Sleep(400 * time.Millisecond)
 	}
 
 	close(jobs)
