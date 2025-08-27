@@ -126,7 +126,7 @@ func insertAnime(
 		Duration:    toInt4(anime.Duration),
 		Source:      toText(anime.Source),
 		Trailer: pgtype.Text{String: fmt.Sprintf("www.%s.com/watch?v=%s",
-			anime.Trailer.Site, anime.Trailer.ID), Valid: anime.Trailer.Site != ""},
+			anime.Trailer.Site, anime.Trailer.ID), Valid: anime.Trailer != (media.Trailer{})},
 		BannerImage:       toText(anime.BannerImage),
 		Popularity:        int32(anime.Popularity),
 		Trending:          int32(anime.Trending),
