@@ -4,11 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/joho/godotenv"
-	"github.com/machinebox/graphql"
 	"log"
 	"math"
 	"media-worker/database"
@@ -16,7 +11,14 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"sync"
 	"time"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/joho/godotenv"
+	"github.com/machinebox/graphql"
 )
 
 type headerCapturingTransport struct {
@@ -193,11 +195,16 @@ func main() {
 		log.Fatal(err)
 	}
 
+	var wg sync.WaitGroup
 	q := database.New(pool)
 	start := time.Now()
 
 	for i := 1; i <= 10; i++ {
-		go dbWorker(i, jobs, failedJobs, pool, q)
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			dbWorker(id, jobs, failedJobs, pool, q)
+		}(i)
 	}
 
 	windowStart := time.Now()
@@ -246,6 +253,7 @@ func main() {
 	}
 
 	close(jobs)
+	wg.Wait()
 	close(failedJobs)
 
 	fmt.Printf("All pages queried with %d failed pages and %d failed inserts\n", len(failedList), len(failedJobs))
