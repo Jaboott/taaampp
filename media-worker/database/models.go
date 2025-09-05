@@ -6,31 +6,61 @@ package database
 
 import (
 	"database/sql"
+	"database/sql/driver"
+	"fmt"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type Anime struct {
-	ID           int32
-	Titles       string
-	Format       pgtype.Text
-	Status       string
-	Season       pgtype.Text
-	SeasonYear   pgtype.Int4
-	Episodes     pgtype.Int4
-	CoverImage   pgtype.Text
-	Genres       []string
-	AverageScore pgtype.Int4
-	Studio       []string
-	LastUpdated  pgtype.Timestamptz
+type MediaType string
+
+const (
+	MediaTypeANIME MediaType = "ANIME"
+	MediaTypeMANGA MediaType = "MANGA"
+)
+
+func (e *MediaType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = MediaType(s)
+	case string:
+		*e = MediaType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for MediaType: %T", src)
+	}
+	return nil
 }
 
-type AnimeDetail struct {
+type NullMediaType struct {
+	MediaType MediaType
+	Valid     bool // Valid is true if MediaType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullMediaType) Scan(value interface{}) error {
+	if value == nil {
+		ns.MediaType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.MediaType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullMediaType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.MediaType), nil
+}
+
+type MediaDetail struct {
 	ID                int32
 	Description       pgtype.Text
 	StartDate         sql.NullString
 	EndDate           sql.NullString
 	Duration          pgtype.Int4
+	Country           pgtype.Text
 	Source            pgtype.Text
 	Trailer           pgtype.Text
 	BannerImage       pgtype.Text
@@ -40,6 +70,25 @@ type AnimeDetail struct {
 	AiringSchedule    sql.NullString
 	Recommendations   []string
 	ScoreDistribution []string
+}
+
+type Medium struct {
+	ID           int32
+	Titles       string
+	Type         NullMediaType
+	Format       pgtype.Text
+	Status       string
+	Season       pgtype.Text
+	SeasonYear   pgtype.Int4
+	Episodes     pgtype.Int4
+	Chapters     pgtype.Int4
+	Volumes      pgtype.Int4
+	CoverImage   pgtype.Text
+	Genres       []string
+	AverageScore pgtype.Int4
+	Studios      []string
+	IsAdult      pgtype.Bool
+	LastUpdated  pgtype.Timestamptz
 }
 
 type User struct {

@@ -25,6 +25,8 @@ CREATE TYPE score_distribution AS (
     amount INTEGER
 );
 
+CREATE TYPE media_type AS ENUM ('ANIME', 'MANGA');
+
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email TEXT UNIQUE NOT NULL,
@@ -34,27 +36,32 @@ CREATE TABLE users (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE anime (
+CREATE TABLE media (
     id INTEGER PRIMARY KEY,
     titles titles NOT NULL,
+    type media_type,
     format TEXT,
     status TEXT NOT NULL,
     season TEXT,
     season_year INTEGER,
     episodes INTEGER,
+    chapters INTEGER,
+    volumes INTEGER,
     cover_image TEXT,
     genres TEXT[],
     average_score INTEGER,
-    studio TEXT[],
+    studios TEXT[],
+    is_adult BOOLEAN,
     last_updated TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
-CREATE TABLE anime_details (
-    id INTEGER PRIMARY KEY REFERENCES anime ON DELETE CASCADE,
+CREATE TABLE media_details (
+    id INTEGER PRIMARY KEY REFERENCES media ON DELETE CASCADE,
     description TEXT,
     start_date fuzzy_date,
     end_date fuzzy_date,
     duration INTEGER,
+    country TEXT,
     source TEXT,
     trailer TEXT,
     banner_image TEXT,

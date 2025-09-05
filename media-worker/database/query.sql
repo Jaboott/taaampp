@@ -1,15 +1,19 @@
--- name: PutAnime :exec
-INSERT INTO anime (id,
+-- name: PutMedia :exec
+INSERT INTO media (id,
                    titles,
+                   type,
                    format,
                    status,
                    season,
                    season_year,
                    episodes,
+                   chapters,
+                   volumes,
                    cover_image,
                    genres,
                    average_score,
-                   studio)
+                   studios,
+                   is_adult)
 VALUES ($1,
         ROW($2, $3, $4)::titles,
         $5,
@@ -20,14 +24,19 @@ VALUES ($1,
         $10,
         $11,
         $12,
-        $13);
+        $13,
+        $14,
+        $15,
+        $16,
+        $17);
 
--- name: PutAnimeDetails :exec
-INSERT INTO anime_details (id,
+-- name: PutMediaDetails :exec
+INSERT INTO media_details (id,
                            description,
                            start_date,
                            end_date,
                            duration,
+                           country,
                            source,
                            trailer,
                            banner_image,
@@ -51,14 +60,15 @@ VALUES (
         $11,
         $12,
         $13,
-        $14
+        $14,
+        $15
        );
 
--- name: QueryHighPrioMedia :many
-SELECT anime.id
-FROM anime
- LEFT JOIN anime_details
-ON anime.id = anime_details.id
+name: QueryHighPrioMedia :many
+SELECT media.id
+FROM media
+ LEFT JOIN media_details
+ON media.id = media_details.id
 WHERE status IN ('RELEASING', 'NOT_YET_RELEASED')
    OR (
     status NOT IN ('RELEASING', 'NOT_YET_RELEASED')

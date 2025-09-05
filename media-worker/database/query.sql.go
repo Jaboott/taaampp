@@ -12,18 +12,22 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const putAnime = `-- name: PutAnime :exec
-INSERT INTO anime (id,
+const putMedia = `-- name: PutMedia :exec
+INSERT INTO media (id,
                    titles,
+                   type,
                    format,
                    status,
                    season,
                    season_year,
                    episodes,
+                   chapters,
+                   volumes,
                    cover_image,
                    genres,
                    average_score,
-                   studio)
+                   studios,
+                   is_adult)
 VALUES ($1,
         ROW($2, $3, $4)::titles,
         $5,
@@ -34,50 +38,63 @@ VALUES ($1,
         $10,
         $11,
         $12,
-        $13)
+        $13,
+        $14,
+        $15,
+        $16,
+        $17)
 `
 
-type PutAnimeParams struct {
+type PutMediaParams struct {
 	ID           int32
 	Column2      string
 	Column3      string
 	Column4      string
+	Type         NullMediaType
 	Format       pgtype.Text
 	Status       string
 	Season       pgtype.Text
 	SeasonYear   pgtype.Int4
 	Episodes     pgtype.Int4
+	Chapters     pgtype.Int4
+	Volumes      pgtype.Int4
 	CoverImage   pgtype.Text
 	Genres       []string
 	AverageScore pgtype.Int4
-	Studio       []string
+	Studios      []string
+	IsAdult      pgtype.Bool
 }
 
-func (q *Queries) PutAnime(ctx context.Context, arg PutAnimeParams) error {
-	_, err := q.db.Exec(ctx, putAnime,
+func (q *Queries) PutMedia(ctx context.Context, arg PutMediaParams) error {
+	_, err := q.db.Exec(ctx, putMedia,
 		arg.ID,
 		arg.Column2,
 		arg.Column3,
 		arg.Column4,
+		arg.Type,
 		arg.Format,
 		arg.Status,
 		arg.Season,
 		arg.SeasonYear,
 		arg.Episodes,
+		arg.Chapters,
+		arg.Volumes,
 		arg.CoverImage,
 		arg.Genres,
 		arg.AverageScore,
-		arg.Studio,
+		arg.Studios,
+		arg.IsAdult,
 	)
 	return err
 }
 
-const putAnimeDetails = `-- name: PutAnimeDetails :exec
-INSERT INTO anime_details (id,
+const putMediaDetails = `-- name: PutMediaDetails :exec
+INSERT INTO media_details (id,
                            description,
                            start_date,
                            end_date,
                            duration,
+                           country,
                            source,
                            trailer,
                            banner_image,
@@ -101,16 +118,18 @@ VALUES (
         $11,
         $12,
         $13,
-        $14
+        $14,
+        $15
        )
 `
 
-type PutAnimeDetailsParams struct {
+type PutMediaDetailsParams struct {
 	ID                int32
 	Description       pgtype.Text
 	StartDate         sql.NullString
 	EndDate           sql.NullString
 	Duration          pgtype.Int4
+	Country           pgtype.Text
 	Source            pgtype.Text
 	Trailer           pgtype.Text
 	BannerImage       pgtype.Text
@@ -122,13 +141,14 @@ type PutAnimeDetailsParams struct {
 	ScoreDistribution []string
 }
 
-func (q *Queries) PutAnimeDetails(ctx context.Context, arg PutAnimeDetailsParams) error {
-	_, err := q.db.Exec(ctx, putAnimeDetails,
+func (q *Queries) PutMediaDetails(ctx context.Context, arg PutMediaDetailsParams) error {
+	_, err := q.db.Exec(ctx, putMediaDetails,
 		arg.ID,
 		arg.Description,
 		arg.StartDate,
 		arg.EndDate,
 		arg.Duration,
+		arg.Country,
 		arg.Source,
 		arg.Trailer,
 		arg.BannerImage,
@@ -140,38 +160,4 @@ func (q *Queries) PutAnimeDetails(ctx context.Context, arg PutAnimeDetailsParams
 		arg.ScoreDistribution,
 	)
 	return err
-}
-
-const queryHighPrioMedia = `-- name: QueryHighPrioMedia :many
-SELECT anime.id
-FROM anime
- LEFT JOIN anime_details
-ON anime.id = anime_details.id
-WHERE status IN ('RELEASING', 'NOT_YET_RELEASED')
-   OR (
-    status NOT IN ('RELEASING', 'NOT_YET_RELEASED')
-        AND end_date IS NOT NULL
-        AND EXTRACT(YEAR FROM CURRENT_DATE) = (end_date).year
-	AND EXTRACT(MONTH FROM CURRENT_DATE) - (end_date).month <= 1
-    )
-`
-
-func (q *Queries) QueryHighPrioMedia(ctx context.Context) ([]int32, error) {
-	rows, err := q.db.Query(ctx, queryHighPrioMedia)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []int32
-	for rows.Next() {
-		var id int32
-		if err := rows.Scan(&id); err != nil {
-			return nil, err
-		}
-		items = append(items, id)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
