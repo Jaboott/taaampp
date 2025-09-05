@@ -141,3 +141,37 @@ func (q *Queries) PutAnimeDetails(ctx context.Context, arg PutAnimeDetailsParams
 	)
 	return err
 }
+
+const queryHighPrioMedia = `-- name: QueryHighPrioMedia :many
+SELECT anime.id
+FROM anime
+ LEFT JOIN anime_details
+ON anime.id = anime_details.id
+WHERE status IN ('RELEASING', 'NOT_YET_RELEASED')
+   OR (
+    status NOT IN ('RELEASING', 'NOT_YET_RELEASED')
+        AND end_date IS NOT NULL
+        AND EXTRACT(YEAR FROM CURRENT_DATE) = (end_date).year
+	AND EXTRACT(MONTH FROM CURRENT_DATE) - (end_date).month <= 1
+    )
+`
+
+func (q *Queries) QueryHighPrioMedia(ctx context.Context) ([]int32, error) {
+	rows, err := q.db.Query(ctx, queryHighPrioMedia)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var id int32
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

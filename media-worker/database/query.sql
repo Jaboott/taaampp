@@ -53,3 +53,16 @@ VALUES (
         $13,
         $14
        );
+
+-- name: QueryHighPrioMedia :many
+SELECT anime.id
+FROM anime
+ LEFT JOIN anime_details
+ON anime.id = anime_details.id
+WHERE status IN ('RELEASING', 'NOT_YET_RELEASED')
+   OR (
+    status NOT IN ('RELEASING', 'NOT_YET_RELEASED')
+        AND end_date IS NOT NULL
+        AND EXTRACT(YEAR FROM CURRENT_DATE) = (end_date).year
+	AND EXTRACT(MONTH FROM CURRENT_DATE) - (end_date).month <= 1
+    );
