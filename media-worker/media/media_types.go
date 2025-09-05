@@ -1,9 +1,9 @@
 package media
 
-type AnimeQueryResponse struct {
+type MediaQueryResponse struct {
 	Page struct {
 		PageInfo PageInfo       `json:"pageInfo"`
-		Media    []AnimeDetails `json:"media"`
+		Media    []MediaDetails `json:"media"`
 	} `json:"Page"`
 }
 
@@ -12,9 +12,10 @@ type PageInfo struct {
 	HasNextPage bool `json:"hasNextPage"`
 }
 
-type AnimeDetails struct {
+type MediaDetails struct {
 	ID          int       `json:"id"`
 	Titles      Titles    `json:"title"`
+	Type        string    `json:"type"`
 	Format      string    `json:"format"`
 	Status      string    `json:"status"`
 	Description string    `json:"description"`
@@ -24,6 +25,9 @@ type AnimeDetails struct {
 	SeasonYear  int       `json:"seasonYear"`
 	Episodes    int       `json:"episodes"`
 	Duration    int       `json:"duration"`
+	Chapters    int       `json:"chapters"`
+	Volumes     int       `json:"volumes"`
+	Country     string    `json:"countryOfOrigin"`
 	Source      string    `json:"source"`
 	Trailer     Trailer   `json:"trailer"`
 	CoverImage  struct {
@@ -40,6 +44,7 @@ type AnimeDetails struct {
 			Name string `json:"name"`
 		} `json:"nodes"`
 	} `json:"studios"`
+	IsAdult        bool `json:"isAdult"`
 	AiringSchedule struct {
 		Nodes []struct {
 			AiringAt int `json:"airingAt"`
