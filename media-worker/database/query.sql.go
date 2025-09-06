@@ -199,14 +199,29 @@ SELECT media.id
 FROM media
 LEFT JOIN media_details
 ON media.id = media_details.id
-WHERE type = 'ANIME'
-AND (
-status IN ('RELEASING', 'NOT_YET_RELEASED')
-    OR (
-    status NOT IN ('RELEASING', 'NOT_YET_RELEASED')
-        AND end_date IS NOT NULL
-        AND EXTRACT(YEAR FROM CURRENT_DATE) = (end_date).year
-    AND EXTRACT(MONTH FROM CURRENT_DATE) - (end_date).month <= 1
+WHERE (
+    type = 'ANIME'
+        AND (
+        status IN ('RELEASING', 'NOT_YET_RELEASED')
+            OR (
+            status NOT IN ('RELEASING', 'NOT_YET_RELEASED')
+                AND end_date IS NOT NULL
+                AND EXTRACT(YEAR FROM CURRENT_DATE) = (end_date).year
+		    AND EXTRACT(MONTH FROM CURRENT_DATE) - (end_date).month <= 1
+            )
+        )
+    )
+OR (
+type = 'MANGA'
+    AND popularity >= 500
+    AND (
+    status IN ('RELEASING', 'NOT_YET_RELEASED')
+        OR (
+        status NOT IN ('RELEASING', 'NOT_YET_RELEASED')
+            AND end_date IS NOT NULL
+            AND EXTRACT(YEAR FROM CURRENT_DATE) = (end_date).year
+        AND EXTRACT(MONTH FROM CURRENT_DATE) - (end_date).month <= 1
+        )
     )
 )
 `
