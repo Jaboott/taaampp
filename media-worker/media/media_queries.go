@@ -100,16 +100,16 @@ var UpdateFromMediaList = fmt.Sprintf(`
 	}
 `, mediaFields)
 
-var UpdateFromPage = fmt.Sprintf(`
-	query UpdateFromPage($page: Int) {
+var DiscoverNewMedia = fmt.Sprintf(`
+	query DiscoverNewMedia($page: Int) {
 		Page(page: $page, perPage: 50) {
 			pageInfo {
 				currentPage
 				hasNextPage
 			}
-			media {
-				%s
+			media(sort: ID_DESC) {
+			  %s
 			}
-		} 
+		}
 	}
 `, mediaFields)
