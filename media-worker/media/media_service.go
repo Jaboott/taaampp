@@ -18,7 +18,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func UpdatePage(pages []int) {
+func UpdatePage(url string, query string, pages []int) {
 	if err := godotenv.Load(".env"); err != nil {
 		log.Fatalf("Error loading .env file: %s", err)
 	}
@@ -45,7 +45,7 @@ func UpdatePage(pages []int) {
 
 		for attempt := 1; attempt <= 5; attempt++ {
 			fmt.Printf("Starting page: %d with attempt: %d\n", page, attempt)
-			response, timeout, err := discoverMedia("https://graphql.anilist.co", UpdateFromPage, page, nil)
+			response, timeout, err := discoverMedia(url, query, page, nil)
 			if err != nil {
 				fmt.Printf("Page %d failed with error: %s\n", page, err)
 				continue
@@ -58,6 +58,7 @@ func UpdatePage(pages []int) {
 			}
 
 			for _, media := range response.Page.Media {
+				fmt.Printf("Starting media with ID: %d\n", media.ID)
 				if err := insertMedia(ctx, pool, q, media); err != nil {
 					fmt.Printf("Media with id %d failed with error: %s\n", media.ID, err)
 				}
@@ -68,6 +69,8 @@ func UpdatePage(pages []int) {
 
 		if !success {
 			fmt.Printf("Page %d failed\n", page)
+		} else {
+			fmt.Printf("Page %d succeeded\n", page)
 		}
 	}
 }
