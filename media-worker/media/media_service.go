@@ -15,14 +15,9 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/joho/godotenv"
 )
 
 func UpdatePage(url string, query string, pages []int) {
-	if err := godotenv.Load(".env"); err != nil {
-		log.Fatalf("Error loading .env file: %s", err)
-	}
-
 	ctx := context.Background()
 	connStr := fmt.Sprintf(
 		"host=%s user=%s password=%s database=%s port=5432",
@@ -57,11 +52,20 @@ func UpdatePage(url string, query string, pages []int) {
 				continue
 			}
 
+			mediaFailed := false
+
 			for _, media := range response.Page.Media {
 				fmt.Printf("Starting media with ID: %d\n", media.ID)
 				if err := insertMedia(ctx, pool, q, media); err != nil {
 					fmt.Printf("Media with id %d failed with error: %s\n", media.ID, err)
+					mediaFailed = true
+					break
 				}
+			}
+
+			if mediaFailed {
+				fmt.Println("Media failed.")
+				continue
 			}
 			success = true
 			break
@@ -95,10 +99,6 @@ func UpdateMedia(url string, query string, idList []int32) {
 		}
 		done <- true
 	}(done)
-
-	if err := godotenv.Load(".env"); err != nil {
-		log.Fatalf("Error loading .env file: %s", err)
-	}
 
 	ctx := context.Background()
 	connStr := fmt.Sprintf(
