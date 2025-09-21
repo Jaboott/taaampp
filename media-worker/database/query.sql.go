@@ -245,3 +245,61 @@ func (q *Queries) QueryHighPrioMedia(ctx context.Context) ([]int32, error) {
 	}
 	return items, nil
 }
+
+const queryLowPrioMedia = `-- name: QueryLowPrioMedia :many
+SELECT media.id
+FROM media
+         LEFT JOIN media_details
+                   ON media.id = media_details.id
+WHERE media.id NOT IN (
+    SELECT media.id
+    FROM media
+             LEFT JOIN media_details
+                       ON media.id = media_details.id
+    WHERE (
+        type = 'ANIME'
+            AND (
+            status IN ('RELEASING', 'NOT_YET_RELEASED')
+                OR (
+                status NOT IN ('RELEASING', 'NOT_YET_RELEASED')
+                    AND end_date IS NOT NULL
+                    AND EXTRACT(YEAR FROM CURRENT_DATE) = (end_date).year
+			    AND EXTRACT(MONTH FROM CURRENT_DATE) - (end_date).month <= 1
+                )
+            )
+        )
+       OR (
+        type = 'MANGA'
+            AND popularity >= 500
+            AND (
+            status IN ('RELEASING', 'NOT_YET_RELEASED')
+                OR (
+                status NOT IN ('RELEASING', 'NOT_YET_RELEASED')
+                    AND end_date IS NOT NULL
+                    AND EXTRACT(YEAR FROM CURRENT_DATE) = (end_date).year
+	        AND EXTRACT(MONTH FROM CURRENT_DATE) - (end_date).month <= 1
+                )
+            )
+        )
+)
+`
+
+func (q *Queries) QueryLowPrioMedia(ctx context.Context) ([]int32, error) {
+	rows, err := q.db.Query(ctx, queryLowPrioMedia)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var id int32
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
