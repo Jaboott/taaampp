@@ -11,7 +11,7 @@ on:
 env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: taaampp
-  ECS_TASK_DEFINITION: /ecs/media-worker-taskdef.json
+  ECS_TASK_DEFINITION: ecs/media-worker-taskdef.json
 
   CONTAINER_NAME: media-worker-container
 
