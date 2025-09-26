@@ -38,7 +38,6 @@
     }
   ],
   "cpu": "512",
-  "enableFaultInjection": false,
   "executionRoleArn": "arn:aws:iam::127214185642:role/ecsTaskExecutionRole",
   "family": "taaampp-task",
   "memory": "1024",
