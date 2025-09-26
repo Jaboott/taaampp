@@ -53,6 +53,11 @@ jobs:
         task-definition: ${{ env.ECS_TASK_DEFINITION }}
         container-name: ${{ env.CONTAINER_NAME }}
         image: ${{ steps.build-image.outputs.image }}
+        secrets: |
+          PG_HOST=arn:aws:ssm:us-east-1:127214185642:parameter/taaampp/pg_host
+          PG_USER=arn:aws:ssm:us-east-1:127214185642:parameter/taaampp/pg_user
+          PG_PASSWORD=arn:aws:ssm:us-east-1:127214185642:parameter/taaampp/pg_password
+          PG_DATABASE=arn:aws:ssm:us-east-1:127214185642:parameter/taaampp/pg_database
       
     - name: Deploy Amazon ECS task definition
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
