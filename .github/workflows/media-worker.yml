@@ -53,6 +53,7 @@ jobs:
         task-definition: ${{ env.ECS_TASK_DEFINITION }}
         container-name: ${{ env.CONTAINER_NAME }}
         image: ${{ steps.build-image.outputs.image }}
+        environment-variables: "DUMMY_VAR=placeholder"
         secrets: |
           PG_HOST=arn:aws:ssm:us-east-1:127214185642:parameter/taaampp/pg_host
           PG_USER=arn:aws:ssm:us-east-1:127214185642:parameter/taaampp/pg_user
