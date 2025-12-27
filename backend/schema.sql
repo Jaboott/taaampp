@@ -34,7 +34,7 @@ CREATE TYPE watchlist_status AS ENUM (
     'watching',
     'completed',
     'dropped',
-    'plan_to_watch'
+    'planning'
     );
 
 CREATE TYPE media_type AS ENUM ('ANIME', 'MANGA');
