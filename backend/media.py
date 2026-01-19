@@ -33,7 +33,7 @@ def get_season():
         return "FALL"
 
 
-def generate_query(base_query, *filters):
+def generate_query(base_query, include_where=True, *filters):
     filters_string = ""
     params = []
 
@@ -43,8 +43,11 @@ def generate_query(base_query, *filters):
 
         if filters_string != "":
             filters_string += "and "
-        else:
+        elif filters_string == "" and include_where:
             filters_string = "where "
+        elif filters_string == "":
+            filters_string = "and "
+
         filters_string += f"{clause} = %s "
         params.append(value)
 
@@ -116,8 +119,8 @@ def get_media_details(id):
 def get_popular(page):
     year = request.args.get('year')
     season = request.args.get('season')
-    query_string = f'select m.* from media m left join media_details md on m.id = md.id <<<where_clauses>>>order by md.popularity desc limit 50 offset %s'
-    query, params = generate_query(query_string, ("m.season_year", year), ("m.season", season))
+    query_string = 'select m.* from media m left join media_details md on m.id = md.id <<<where_clauses>>> order by md.popularity desc limit 50 offset %s'
+    query, params = generate_query(query_string, True, ("m.season_year", year), ("m.season", season))
     db = create_db_connection()
     try:
         popular_medias = db.fetchall(
@@ -140,8 +143,8 @@ def get_popular(page):
 def get_top(page):
     year = request.args.get('year')
     season = request.args.get('season')
-    query_string = f'select * from media where <<<where_clauses>>>and average_score is not null order by average_score desc limit 50 offset %s'
-    query, params = generate_query(query_string, ("season_year", year), ("season", season))
+    query_string = 'select * from media where average_score is not null <<<where_clauses>>> order by average_score desc limit 50 offset %s'
+    query, params = generate_query(query_string, False, ("season_year", year), ("season", season))
     db = create_db_connection()
     try:
         top_medias = db.fetchall(
