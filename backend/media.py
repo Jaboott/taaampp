@@ -33,6 +33,24 @@ def get_season():
         return "FALL"
 
 
+def generate_query(base_query, *filters):
+    filters_string = ""
+    params = []
+
+    for clause, value in filters:
+        if value is None:
+            continue
+
+        if filters_string != "":
+            filters_string += "and "
+        else:
+            filters_string = "where "
+        filters_string += f"{clause} = %s "
+        params.append(value)
+
+    return base_query.replace("<<<where_clauses>>>", filters_string), params
+
+
 @app.route('/')
 def hello_world():  # put application's code here
     return 'Hello World!'
@@ -79,7 +97,7 @@ def get_medias(page):
 def get_media_details(id):
     db = create_db_connection()
     try:
-        media_data = db.fetchone('select * from media m left join media_details md on  m.id = md.id where m.id = %s',
+        media_data = db.fetchone('select * from media m left join media_details md on m.id = md.id where m.id = %s',
                                  (id,))
         return jsonify({
             'status': 'success',
@@ -98,12 +116,13 @@ def get_media_details(id):
 def get_popular(page):
     year = request.args.get('year')
     season = request.args.get('season')
-    query_string = f'select m.* from media m left join media_details md on m.id = md.id where {f"m.season_year = {year}" if year else 'TRUE'} and {f"m.season = '{season}'" if season else 'TRUE'} order by md.popularity desc limit 50 offset %s'
+    query_string = f'select m.* from media m left join media_details md on m.id = md.id <<<where_clauses>>>order by md.popularity desc limit 50 offset %s'
+    query, params = generate_query(query_string, ("m.season_year", year), ("m.season", season))
     db = create_db_connection()
     try:
         popular_medias = db.fetchall(
-            query_string,
-            ((page - 1) * 50,))
+            query,
+            tuple(params) + ((page - 1) * 50,))
         return jsonify({
             'status': 'success',
             'data': popular_medias
@@ -121,12 +140,13 @@ def get_popular(page):
 def get_top(page):
     year = request.args.get('year')
     season = request.args.get('season')
-    query_string = f'select * from media where {f"season_year = {year}" if year else 'TRUE'} and {f"season = '{season}'" if season else 'TRUE'} and average_score is not null order by average_score desc limit 50 offset %s'
+    query_string = f'select * from media where <<<where_clauses>>>and average_score is not null order by average_score desc limit 50 offset %s'
+    query, params = generate_query(query_string, ("season_year", year), ("season", season))
     db = create_db_connection()
     try:
         top_medias = db.fetchall(
-            query_string,
-            ((page - 1) * 50,))
+            query,
+            tuple(params) + ((page - 1) * 50,))
         return jsonify({
             'status': 'success',
             'data': top_medias
