@@ -4,4 +4,4 @@ Continuation of my first ever project where I built a re-skined MAL top airing m
 > ⚠️ **Warning:** Work in progress
 
 ## Media Worker Workflow Diagram
-![](https://i.imgur.com/EaKSuJb.png)
+![](https://i.imgur.com/5JKQBkb.png)
