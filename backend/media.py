@@ -79,10 +79,14 @@ def get_media(id):
 
 @app.route('/api/medias/<int:page>')
 def get_medias(page):
+    media_type = request.args.get('media_type')
+
     db = create_db_connection()
     if page == 0: page = 1
+    query_string = 'select * from media <<<where_clauses>>> order by id limit 50 offset %s'
+    query, params = generate_query(query_string, True, ("type", media_type))
     try:
-        medias = db.fetchall('select * from media order by id limit 50 offset %s', ((page - 1) * 50,))
+        medias = db.fetchall(query, tuple(params) + ((page - 1) * 50,))
         return jsonify({
             'status': 'success',
             'data': medias
@@ -119,8 +123,10 @@ def get_media_details(id):
 def get_popular(page):
     year = request.args.get('year')
     season = request.args.get('season')
+    media_type = request.args.get('media_type')
+
     query_string = 'select m.* from media m left join media_details md on m.id = md.id <<<where_clauses>>> order by md.popularity desc limit 50 offset %s'
-    query, params = generate_query(query_string, True, ("m.season_year", year), ("m.season", season))
+    query, params = generate_query(query_string, True, ("m.type", media_type), ("m.season_year", year), ("m.season", season))
     db = create_db_connection()
     try:
         popular_medias = db.fetchall(
@@ -143,8 +149,10 @@ def get_popular(page):
 def get_top(page):
     year = request.args.get('year')
     season = request.args.get('season')
+    media_type = request.args.get('media_type')
+
     query_string = 'select * from media where average_score is not null <<<where_clauses>>> order by average_score desc limit 50 offset %s'
-    query, params = generate_query(query_string, False, ("season_year", year), ("season", season))
+    query, params = generate_query(query_string, False, ("type", media_type), ("season_year", year), ("season", season))
     db = create_db_connection()
     try:
         top_medias = db.fetchall(
