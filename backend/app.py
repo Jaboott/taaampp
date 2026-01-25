@@ -1,12 +1,15 @@
 import os
+import uuid
 
-from flask import Flask, jsonify, request
+from datetime import datetime, timedelta, timezone
+from flask import Flask, jsonify, request, render_template
 from flask.cli import load_dotenv
 
 from database import PostgresHandler
 
 load_dotenv()
 app = Flask(__name__)
+
 
 def create_db_connection():
     return PostgresHandler(
@@ -38,6 +41,7 @@ def ping_db():
         }), 500
     finally:
         db.close()
+
 
 @app.route('/api/register', methods=['POST'])
 def register_user():
@@ -94,17 +98,25 @@ def authenticate_user():
 
     db = create_db_connection()
     try:
-        data = db.fetchone("SELECT id, password_hash FROM users WHERE email = %s", (email,))
-        if not data or not checkpw(password.encode('utf-8'), data["password_hash"].encode('utf-8')):
+        user_data = db.fetchone("SELECT id, password_hash FROM users WHERE email = %s", (email,))
+        if not user_data or not checkpw(password.encode('utf-8'), user_data["password_hash"].encode('utf-8')):
             return jsonify({
                 'status': 'fail',
                 'message': "Password doesn't match. Please try again.",
             }), 401
 
-        return jsonify({
+        cookie_value = str(uuid.uuid4())
+        expires_at = datetime.now(timezone.utc) + timedelta(weeks=3)
+        db.execute("INSERT INTO cookies (user_id, token_hash, expires_at) VALUES (%s, %s, %s)",
+                   (user_data["id"], cookie_value, expires_at))
+
+        response = jsonify({
             'status': 'success',
             'message': 'User authenticated successfully',
-        }), 200
+        })
+        response.set_cookie("session", cookie_value, expires=expires_at)
+
+        return response, 200
     except Exception as e:
         return jsonify({
             'status': 'fail',

@@ -49,6 +49,14 @@ CREATE TABLE users
     created_at    TIMESTAMPTZ      DEFAULT NOW()
 );
 
+CREATE TABLE cookies
+(
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users (id) ON DELETE CASCADE,
+    token_hash TEXT NOT NULL,
+    expires_at TIMESTAMP NOT NULL
+);
+
 CREATE TABLE watchlist
 (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
