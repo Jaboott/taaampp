@@ -25,6 +25,9 @@ def create_db_connection():
 def base_page():  # put application's code here
     return render_template('index.html')
 
+@app.route('/profile')
+def profile_page():  # put application's code here
+    return render_template('profile.html')
 
 @app.route('/api/ping')
 def ping_db():
