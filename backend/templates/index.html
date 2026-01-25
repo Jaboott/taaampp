@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Login</title>
+</head>
+<body>
+<input type="text" id="email" placeholder="Email" required/>
+<br/>
+<input type="text" id="username" placeholder="Username" required/>
+<br/>
+<input type="password" id="password" placeholder="Password" required/>
+<br/>
+<button onclick="register()">Register</button>
+<button onclick="login()">Login</button>
+
+<br/>
+
+<div>
+    <strong>Session cookie:</strong>
+    <span id="session-value">Not set</span>
+</div>
+
+<script>
+    function getCookie(name) {
+        return document.cookie
+            .split("; ")
+            .find(row => row.startsWith(name + "="))
+            ?.split("=")[1];
+    }
+
+    function updateSessionDisplay() {
+        const session = getCookie("session");
+        document.getElementById("session-value").textContent = session || "Not set";
+    }
+
+    async function postJSON(url, payload) {
+        const res = await fetch(url, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            credentials: "include",
+            body: JSON.stringify(payload),
+        });
+
+        // Try to parse JSON if present, otherwise return null
+        const text = await res.text();
+        const data = text ? (() => {
+            try {
+                return JSON.parse(text);
+            } catch {
+                return text;
+            }
+        })() : null;
+
+        if (!res.ok) {
+            console.error("Request failed:", res.status, data);
+            throw new Error("Request failed");
+        }
+        return data;
+    }
+
+    async function register() {
+        const email = document.getElementById("email").value;
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+
+        await postJSON("/api/register", {email, username, password});
+        updateSessionDisplay();
+    }
+
+    async function login() {
+        const email = document.getElementById("email").value;
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+
+        await postJSON("/api/authenticate", {email, username, password});
+        updateSessionDisplay();
+    }
+
+    updateSessionDisplay();
+</script>
+
+</body>
+</html>

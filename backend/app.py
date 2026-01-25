@@ -20,9 +20,11 @@ def create_db_connection():
         port=5432,
     )
 
-@app.route('/')
-def hello_world():  # put application's code here
-    return 'Hello World!'
+
+@app.route('/login')
+def base_page():  # put application's code here
+    return render_template('index.html')
+
 
 @app.route('/api/ping')
 def ping_db():
