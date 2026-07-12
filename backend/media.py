@@ -63,7 +63,7 @@ def hello_world():  # put application's code here
 def get_media(id):
     db = create_db_connection()
     try:
-        media_data = db.fetchone('select * from media where id = %s', (id,))
+        media_data = db.fetchone('select *, to_json(titles) as titles from media where id = %s',(id,))
         return jsonify({
             'status': 'success',
             'data': media_data
@@ -83,7 +83,7 @@ def get_medias(page):
 
     db = create_db_connection()
     if page == 0: page = 1
-    query_string = 'select * from media <<<where_clauses>>> order by id limit 50 offset %s'
+    query_string = 'select *, to_json(titles) as titles from media <<<where_clauses>>> order by id limit 50 offset %s'
     query, params = generate_query(query_string, True, ("type", media_type))
     try:
         medias = db.fetchall(query, tuple(params) + ((page - 1) * 50,))
@@ -146,7 +146,7 @@ def get_batch_medias():
 
     db = create_db_connection()
     try:
-        query_string = f"select * from media {'left join media_details on media.id = media_details.id' if include_details else ''} where media.id = any(%s)"
+        query_string = f"select *, to_json(titles) as titles {',to_json(start_date) as start_date, to_json(end_date) as end_date, to_json(airing_schedule) as airing_schedule, to_json(recommendations) as recommendations, to_json(score_distribution) as score_distribution' if include_details else ''} from media {'left join media_details on media.id = media_details.id' if include_details else ''} where media.id = any(%s)"
         medias = db.fetchall(query_string, (request_ids,))
         return jsonify({
             'status': 'success',
@@ -165,7 +165,7 @@ def get_batch_medias():
 def get_media_details(id):
     db = create_db_connection()
     try:
-        media_data = db.fetchone('select * from media m left join media_details md on m.id = md.id where m.id = %s',
+        media_data = db.fetchone('select *, to_json(titles) as titles, to_json(start_date) as start_date, to_json(end_date) as end_date, to_json(airing_schedule) as airing_schedule, to_json(recommendations) as recommendations, to_json(score_distribution) as score_distribution from media m left join media_details md on m.id = md.id where m.id = %s',
                                  (id,))
         return jsonify({
             'status': 'success',
@@ -186,7 +186,7 @@ def get_popular(page):
     season = request.args.get('season')
     media_type = request.args.get('media_type')
 
-    query_string = 'select m.* from media m left join media_details md on m.id = md.id <<<where_clauses>>> order by md.popularity desc limit 50 offset %s'
+    query_string = 'select m.*, to_json(titles) as titles from media m left join media_details md on m.id = md.id <<<where_clauses>>> order by md.popularity desc limit 50 offset %s'
     query, params = generate_query(query_string, True, ("m.type", media_type), ("m.season_year", year), ("m.season", season))
     db = create_db_connection()
     try:
@@ -212,7 +212,7 @@ def get_top(page):
     season = request.args.get('season')
     media_type = request.args.get('media_type')
 
-    query_string = 'select * from media where average_score is not null <<<where_clauses>>> order by average_score desc limit 50 offset %s'
+    query_string = 'select *, to_json(titles) as titles from media where average_score is not null <<<where_clauses>>> order by average_score desc limit 50 offset %s'
     query, params = generate_query(query_string, False, ("type", media_type), ("season_year", year), ("season", season))
     db = create_db_connection()
     try:
