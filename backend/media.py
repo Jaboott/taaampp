@@ -99,6 +99,67 @@ def get_medias(page):
     finally:
         db.close()
 
+@app.route('/api/medias/batch', methods=['POST'])
+def get_batch_medias():
+    data = request.get_json()
+
+    if not data or 'ids' not in data:
+        return jsonify({
+            'status': 'error',
+            'message': 'No IDs provided'
+        }), 400
+
+    request_ids = data['ids']
+    details_str = request.args.get('details', 'false').lower()
+
+    if details_str not in ('true', 'false'):
+        return jsonify({
+            'status': 'error',
+            'message': 'details must be true or false'
+        }), 400
+
+    if not isinstance(request_ids, list):
+        return jsonify({
+            'status': 'error',
+            'message': 'ids must be a list'
+        }), 400
+
+    if not request_ids:
+        return jsonify({
+            'status': 'error',
+            'message': 'ids cannot be empty',
+        }), 400
+
+    if not all(type(i) is int for i in request_ids):
+        return jsonify({
+            'status': 'error',
+            'message': 'ids must be integers'
+        }), 400
+
+    if len(request_ids) > 30:
+        return jsonify({
+            'status': 'error',
+            'message': 'a maximum of 30 ids is allowed',
+        }), 400
+
+    include_details = details_str == 'true'
+
+    db = create_db_connection()
+    try:
+        query_string = f"select * from media {'left join media_details on media.id = media_details.id' if include_details else ''} where media.id = any(%s)"
+        medias = db.fetchall(query_string, (request_ids,))
+        return jsonify({
+            'status': 'success',
+            'data': medias
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+    finally:
+        db.close()
+
 
 @app.route('/api/media_detail/<int:id>')
 def get_media_details(id):
